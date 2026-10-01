@@ -6,8 +6,10 @@ import { Agent } from '@atproto/api';
 import {
   atprotoLoopbackClientMetadata,
   buildAtprotoLoopbackClientId,
+  HandleResolverError,
   JoseKey,
   NodeOAuthClient,
+  OAuthResolverError,
   type NodeSavedSession,
   type NodeSavedState,
   type OAuthClientMetadataInput,
@@ -120,8 +122,17 @@ export async function startBlueskyLink(ctx: AppContext, userId: string, handle: 
   if (!clean) throw badRequest('Enter your Bluesky handle, like name.bsky.social.');
   const state = await startFlow(ctx, userId, 'bluesky', {});
   const client = await blueskyClient(ctx);
-  const url = await client.authorize(clean, { state, scope: SCOPE }).catch(() => {
-    throw badRequest(`Couldn't find ${clean} on Bluesky.`);
+  const url = await client.authorize(clean, { state, scope: SCOPE }).catch((error: unknown) => {
+    if (error instanceof OAuthResolverError || error instanceof HandleResolverError) {
+      throw badRequest(`Couldn't find ${clean} on Bluesky.`);
+    }
+    // Usually Bluesky couldn't fetch our client metadata: a reverse proxy not passing /oauth/* to the server.
+    ctx.log.warn({ err: error }, 'Bluesky refused to start a sign-in');
+    throw badRequest(
+      isLocal(ctx)
+        ? "Bluesky didn't accept the sign-in request. Try again in a moment."
+        : `Bluesky couldn't load this instance's sign-in details. If you run ${ctx.config.domain}, make sure /oauth/* reaches the Jolt server.`,
+    );
   });
   return url.href;
 }

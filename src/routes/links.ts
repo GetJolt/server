@@ -6,7 +6,7 @@ import {
 } from '@getjolt/protocol';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { AppContext } from '../context.js';
-import { ApiError, parse } from '../http/errors.js';
+import { ApiError, badRequest, parse } from '../http/errors.js';
 import { deleteLink, linkRow, listLinks, updateLink } from '../links/accounts.js';
 import {
   blueskyClient,
@@ -17,7 +17,15 @@ import {
 } from '../links/bluesky.js';
 import { finishMastodonLink, revokeMastodon, startMastodonLink } from '../links/mastodon.js';
 import { findFriends } from '../links/friends.js';
-import { linkAction, linkReply, linkTimeline } from '../links/timelines.js';
+import {
+  linkAction,
+  linkFollow,
+  linkProfile,
+  linkProfilePosts,
+  linkReply,
+  linkThread,
+  linkTimeline,
+} from '../links/timelines.js';
 import { requireLocalAuth } from '../services/auth.js';
 
 const strict = { rateLimit: { max: 10, timeWindow: '1 minute' } };
@@ -50,6 +58,48 @@ export function linkRoutes(app: FastifyInstance, ctx: AppContext) {
       return linkTimeline(ctx, row, before || undefined);
     },
   );
+
+  type LinkQuery = { Params: { id: string }; Querystring: Record<string, string | undefined> };
+  const required = (value: string | undefined, name: string) => {
+    if (!value || value.length > 600) throw badRequest(`Missing ${name}.`);
+    return value;
+  };
+
+  app.get<LinkQuery>('/links/:id/thread', async (req) => {
+    const { userId } = await requireLocalAuth(ctx, req);
+    return linkThread(ctx, await linkRow(ctx, userId, req.params.id), required(req.query.post, 'post'));
+  });
+
+  app.get<LinkQuery>('/links/:id/profile', async (req) => {
+    const { userId } = await requireLocalAuth(ctx, req);
+    return linkProfile(ctx, await linkRow(ctx, userId, req.params.id), required(req.query.user, 'user'));
+  });
+
+  app.get<LinkQuery>('/links/:id/profile/posts', async (req) => {
+    const { userId } = await requireLocalAuth(ctx, req);
+    const filter = (['posts', 'replies', 'media'] as const).find((f) => f === req.query.filter) ?? 'posts';
+    const before = req.query.before?.slice(0, 512) || undefined;
+    return linkProfilePosts(
+      ctx,
+      await linkRow(ctx, userId, req.params.id),
+      required(req.query.user, 'user'),
+      filter,
+      before,
+    );
+  });
+
+  for (const method of ['PUT', 'DELETE'] as const) {
+    app.route<LinkQuery>({
+      method,
+      url: '/links/:id/profile/follow',
+      config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
+      handler: async (req) => {
+        const { userId } = await requireLocalAuth(ctx, req);
+        const row = await linkRow(ctx, userId, req.params.id);
+        return linkFollow(ctx, row, required(req.query.user, 'user'), method === 'PUT');
+      },
+    });
+  }
 
   app.post<{ Params: { id: string } }>(
     '/links/:id/actions',

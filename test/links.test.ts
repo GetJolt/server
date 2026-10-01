@@ -17,6 +17,7 @@ async function fakeMastodon(joltDomain: string) {
     media: [] as string[],
     statuses: [] as Array<Record<string, unknown>>,
     deleted: [] as string[],
+    profileQuery: {} as Record<string, string>,
   };
   const app: FastifyInstance = Fastify();
   app.post('/api/v1/apps', async (req) => {
@@ -114,6 +115,33 @@ async function fakeMastodon(joltDomain: string) {
   app.post<{ Params: { id: string } }>('/api/v1/statuses/:id/favourite', async (req) =>
     status(req.params.id, { favourited: true, favourites_count: 3 }),
   );
+  app.get<{ Params: { id: string } }>('/api/v1/statuses/:id/context', async (req) => ({
+    ancestors: [status('90')],
+    descendants: [
+      status('110', { in_reply_to_id: req.params.id, content: '<p>Direct reply</p>' }),
+      status('111', { in_reply_to_id: '110', content: '<p>Reply to the reply</p>' }),
+    ],
+  }));
+  app.get('/api/v1/accounts/relationships', async () => [
+    { id: '7', following: false, requested: false, followed_by: true },
+  ]);
+  app.get('/api/v1/accounts/7', async () => ({
+    ...sam,
+    note: '<p>Baker &amp; walker</p>',
+    followers_count: 120,
+    following_count: 80,
+    statuses_count: 950,
+  }));
+  app.get('/api/v1/accounts/7/statuses', async (req) => {
+    seen.profileQuery = req.query as Record<string, string>;
+    return [status('120')];
+  });
+  app.post('/api/v1/accounts/7/follow', async () => ({
+    id: '7',
+    following: true,
+    requested: false,
+    followed_by: true,
+  }));
   app.get('/api/v1/accounts/42/following', async () => [
     {
       acct: `bob@${joltDomain}`,
@@ -253,6 +281,31 @@ describe('linked accounts', { timeout: 20_000 }, () => {
       status: '@sam@elsewhere.example Nice one',
       in_reply_to_id: '100',
     });
+  });
+
+  it('opens threads and profiles from the linked account inside Jolt', async () => {
+    const link = alice.social.state.linkedAccounts[0]!;
+    await alice.social.loadFeed(`link:${link.id}`);
+    const post = alice.social.state.posts[alice.social.feed(`link:${link.id}`).entries[0]!.postId]!;
+
+    await alice.social.loadThread(post.id);
+    const thread = alice.social.state.threads[post.id]!;
+    expect(thread.ancestors).toEqual([`masto:${link.id}:90`]);
+    expect(thread.replies.map((r) => alice.social.state.posts[r]!.text)).toEqual(['Direct reply']);
+
+    const authorId = post.author.id;
+    expect(authorId).toBe(`masto:${link.id}:7`);
+    const profile = await alice.social.loadProfile(authorId);
+    expect(profile.user).toMatchObject({ displayName: 'Sam', bio: 'Baker & walker' });
+    expect(profile.counts).toEqual({ followers: 120, following: 80, posts: 950 });
+    expect(profile.relationship).toMatchObject({ following: 'none', followedBy: true });
+
+    await alice.social.loadFeed(`profile:${authorId}:posts`);
+    expect(alice.social.feed(`profile:${authorId}:posts`).entries).toHaveLength(1);
+    expect(mastodon.seen.profileQuery.exclude_replies).toBe('true');
+
+    const rel = await alice.social.setFollowing(authorId, true);
+    expect(rel.following).toBe('following');
   });
 
   it('finds people you follow there, with Jolt users first', async () => {

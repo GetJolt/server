@@ -1,6 +1,6 @@
 {
   "name": "@getjolt/server",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "The Jolt instance server. Run your own corner of the Jolt network.",
   "license": "AGPL-3.0-only",
@@ -48,7 +48,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@getjolt/sdk": "^0.2.0",
+    "@getjolt/sdk": "^0.2.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.9.0",
     "@types/pg": "^8.23.1",
