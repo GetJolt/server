@@ -38,6 +38,18 @@ The server is built on Fastify, with a WebSocket gateway for realtime events and
 
 Users from other instances sign in with a short-lived certificate from their home instance rather than a password. The server checks it against that instance's published keys, and nothing gets copied between instances. Each community's messages stay on the instance that hosts it. The details are in the [protocol repository](https://github.com/GetJolt/protocol/blob/main/PROTOCOL.md).
 
+## The timeline and the fediverse
+
+Besides servers and channels, every instance runs a timeline: posts, replies, reposts, quotes, likes and follows, with images, alt text and content warnings. It's built in the same process and the same database, so there's nothing extra to run.
+
+The timeline speaks ActivityPub, the protocol behind Mastodon. People on Mastodon, Threads, Misskey and other ActivityPub servers can follow your users, and your users can follow them back by looking up an address like `@someone@mastodon.social`. Two Jolt instances federate with each other the same way. Your existing `JOLT_FEDERATION` settings apply here too, so an allowlist or a blocked domain covers both chat and the timeline.
+
+Bluesky users can reach Jolt through [Bridgy Fed](https://fed.brid.gy). It's opt in on both sides: a Jolt user follows `@bsky.brid.gy@bsky.brid.gy` to appear on Bluesky, and Bluesky users follow `@ap.brid.gy` to appear here.
+
+People can also link their Bluesky and Mastodon accounts. A linked account shows on their profile with a verified badge, posts can go out to it at the same time, its home timeline can be read and answered from Jolt, and the people they follow there can be found and followed here. Tokens for linked accounts are encrypted with a key from `JOLT_SECRET_KEY`, or one the server generates next to the SQLite database, and they never leave the server. On a public instance Bluesky reads its OAuth client details from `/oauth/bluesky/client-metadata.json`, so `/oauth/*` must reach the server too.
+
+Delivery to other servers goes through a queue in the database and retries on its own, so a slow or broken server never holds up anyone posting. If you run Caddy or nginx in front of the server yourself, make sure `/users/*`, `/inbox`, `/posts/*`, `/nodeinfo/*`, `/@*`, `/oauth/*` and `/.well-known/*` reach it as well as `/api/*`. Profiles and posts also get public web pages at `/@name` and `/@name/posts/<id>`.
+
 ## Development
 
 ```sh

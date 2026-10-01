@@ -33,7 +33,7 @@ describe('avatars', () => {
   it('stores an upload and serves it to anyone', async () => {
     await alice.setAvatar(new Blob([PIXEL], { type: 'image/png' }));
     const url = await waitFor(() => alice.state.me[a.domain]?.avatarUrl);
-    expect(url).toMatch(new RegExp(`^http://${a.domain}/api/v1/avatars/[\\w-]{43}$`));
+    expect(url).toMatch(new RegExp(`^http://${a.domain}/api/v1/media/[\\w-]{43}$`));
 
     const response = await fetch(url);
     expect(response.headers.get('content-type')).toBe('image/png');

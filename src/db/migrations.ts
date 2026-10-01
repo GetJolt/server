@@ -1,6 +1,6 @@
 // Migrations are written with Kysely's schema builder using only types both SQLite and Postgres accept.
 
-import { PostgresAdapter, type Kysely } from 'kysely';
+import { PostgresAdapter, sql, type Kysely } from 'kysely';
 import type { Migration, MigrationProvider } from 'kysely/migration';
 
 const migrations: Record<string, Migration> = {
@@ -210,6 +210,215 @@ const migrations: Record<string, Migration> = {
         .addColumn('data', binary, (c) => c.notNull())
         .addColumn('created_at', 'bigint', (c) => c.notNull())
         .execute();
+    },
+  },
+
+  '0003_social': {
+    async up(db: Kysely<unknown>) {
+      const binary = db.getExecutor().adapter instanceof PostgresAdapter ? 'bytea' : 'blob';
+      await db.schema
+        .createTable('media')
+        .addColumn('hash', 'text', (c) => c.primaryKey())
+        .addColumn('content_type', 'text', (c) => c.notNull())
+        .addColumn('data', binary, (c) => c.notNull())
+        .addColumn('width', 'integer', (c) => c.notNull().defaultTo(0))
+        .addColumn('height', 'integer', (c) => c.notNull().defaultTo(0))
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .execute();
+      await sql`insert into media (hash, content_type, data, created_at)
+        select hash, content_type, data, created_at from avatars`.execute(db);
+      await db.schema.dropTable('avatars').execute();
+
+      await db.schema
+        .createTable('media_uploads')
+        .addColumn('id', 'bigint', (c) => c.primaryKey())
+        .addColumn('user_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('hash', 'text', (c) => c.notNull())
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .execute();
+
+      await db.schema
+        .createTable('posts')
+        .addColumn('id', 'bigint', (c) => c.primaryKey())
+        .addColumn('author_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('text', 'text', (c) => c.notNull())
+        .addColumn('facets', 'text', (c) => c.notNull().defaultTo('[]'))
+        .addColumn('visibility', 'text', (c) => c.notNull())
+        .addColumn('cw', 'text')
+        .addColumn('reply_to_id', 'bigint')
+        .addColumn('root_id', 'bigint')
+        .addColumn('quote_id', 'bigint')
+        .addColumn('reply_count', 'integer', (c) => c.notNull().defaultTo(0))
+        .addColumn('repost_count', 'integer', (c) => c.notNull().defaultTo(0))
+        .addColumn('like_count', 'integer', (c) => c.notNull().defaultTo(0))
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .addColumn('edited_at', 'bigint')
+        .execute();
+      await db.schema.createIndex('posts_author_idx').on('posts').columns(['author_id', 'id']).execute();
+      await db.schema.createIndex('posts_reply_idx').on('posts').columns(['reply_to_id', 'id']).execute();
+
+      await db.schema
+        .createTable('post_media')
+        .addColumn('post_id', 'bigint', (c) => c.notNull().references('posts.id').onDelete('cascade'))
+        .addColumn('position', 'integer', (c) => c.notNull())
+        .addColumn('media_hash', 'text')
+        .addColumn('remote_url', 'text')
+        .addColumn('media_type', 'text', (c) => c.notNull())
+        .addColumn('alt', 'text', (c) => c.notNull().defaultTo(''))
+        .addColumn('width', 'integer')
+        .addColumn('height', 'integer')
+        .addPrimaryKeyConstraint('post_media_pk', ['post_id', 'position'])
+        .execute();
+
+      await db.schema
+        .createTable('follows')
+        .addColumn('follower_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('followee_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('state', 'text', (c) => c.notNull())
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .addPrimaryKeyConstraint('follows_pk', ['follower_id', 'followee_id'])
+        .execute();
+      await db.schema.createIndex('follows_followee_idx').on('follows').column('followee_id').execute();
+
+      await db.schema
+        .createTable('likes')
+        .addColumn('user_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('post_id', 'bigint', (c) => c.notNull().references('posts.id').onDelete('cascade'))
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .addPrimaryKeyConstraint('likes_pk', ['user_id', 'post_id'])
+        .execute();
+      await db.schema.createIndex('likes_post_idx').on('likes').column('post_id').execute();
+
+      await db.schema
+        .createTable('reposts')
+        .addColumn('id', 'bigint', (c) => c.primaryKey())
+        .addColumn('user_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('post_id', 'bigint', (c) => c.notNull().references('posts.id').onDelete('cascade'))
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .addUniqueConstraint('reposts_once', ['user_id', 'post_id'])
+        .execute();
+      await db.schema.createIndex('reposts_user_idx').on('reposts').columns(['user_id', 'id']).execute();
+
+      await db.schema
+        .createTable('notifications')
+        .addColumn('id', 'bigint', (c) => c.primaryKey())
+        .addColumn('user_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('type', 'text', (c) => c.notNull())
+        .addColumn('actor_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('post_id', 'bigint', (c) => c.references('posts.id').onDelete('cascade'))
+        .addColumn('read', 'integer', (c) => c.notNull().defaultTo(0))
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .execute();
+      await db.schema
+        .createIndex('notifications_user_idx')
+        .on('notifications')
+        .columns(['user_id', 'id'])
+        .execute();
+    },
+  },
+
+  '0004_activitypub': {
+    async up(db: Kysely<unknown>) {
+      for (const column of ['ap_id', 'ap_inbox', 'ap_shared_inbox', 'ap_url', 'ap_followers']) {
+        await db.schema.alterTable('users').addColumn(column, 'text').execute();
+      }
+      await db.schema.createIndex('users_ap_id_unique').unique().on('users').column('ap_id').execute();
+
+      await db.schema.alterTable('posts').addColumn('ap_id', 'text').execute();
+      await db.schema.alterTable('posts').addColumn('ap_url', 'text').execute();
+      await db.schema.createIndex('posts_ap_id_unique').unique().on('posts').column('ap_id').execute();
+
+      await db.schema
+        .createTable('actor_keys')
+        .addColumn('actor', 'text', (c) => c.primaryKey())
+        .addColumn('rsa_private', 'text', (c) => c.notNull())
+        .addColumn('rsa_public', 'text', (c) => c.notNull())
+        .addColumn('ed_private', 'text', (c) => c.notNull())
+        .addColumn('ed_public', 'text', (c) => c.notNull())
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .execute();
+
+      await db.schema
+        .createTable('fedify_kv')
+        .addColumn('key', 'text', (c) => c.primaryKey())
+        .addColumn('value', 'text', (c) => c.notNull())
+        .addColumn('expires_at', 'bigint')
+        .execute();
+
+      await db.schema
+        .createTable('fedify_queue')
+        .addColumn('id', 'text', (c) => c.primaryKey())
+        .addColumn('message', 'text', (c) => c.notNull())
+        .addColumn('deliver_at', 'bigint', (c) => c.notNull())
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .execute();
+      await db.schema.createIndex('fedify_queue_due_idx').on('fedify_queue').column('deliver_at').execute();
+    },
+  },
+
+  '0005_linked_accounts': {
+    async up(db: Kysely<unknown>) {
+      await db.schema
+        .createTable('linked_accounts')
+        .addColumn('id', 'bigint', (c) => c.primaryKey())
+        .addColumn('user_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('provider', 'text', (c) => c.notNull())
+        .addColumn('external_id', 'text', (c) => c.notNull())
+        .addColumn('handle', 'text', (c) => c.notNull())
+        .addColumn('url', 'text', (c) => c.notNull())
+        .addColumn('secret', 'text')
+        .addColumn('crosspost_default', 'integer', (c) => c.notNull().defaultTo(0))
+        .addColumn('show_timeline', 'integer', (c) => c.notNull().defaultTo(1))
+        .addColumn('verified_at', 'bigint')
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .addUniqueConstraint('linked_accounts_once', ['user_id', 'provider', 'external_id'])
+        .execute();
+      await db.schema
+        .createIndex('linked_accounts_external_idx')
+        .on('linked_accounts')
+        .columns(['provider', 'external_id'])
+        .execute();
+
+      await db.schema
+        .createTable('oauth_flows')
+        .addColumn('state', 'text', (c) => c.primaryKey())
+        .addColumn('user_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('provider', 'text', (c) => c.notNull())
+        .addColumn('data', 'text', (c) => c.notNull())
+        .addColumn('expires_at', 'bigint', (c) => c.notNull())
+        .execute();
+
+      await db.schema
+        .createTable('oauth_kv')
+        .addColumn('key', 'text', (c) => c.primaryKey())
+        .addColumn('value', 'text', (c) => c.notNull())
+        .addColumn('expires_at', 'bigint')
+        .execute();
+    },
+  },
+
+  '0006_crossposts': {
+    async up(db: Kysely<unknown>) {
+      await db.schema
+        .createTable('crossposts')
+        .addColumn('post_id', 'bigint', (c) => c.notNull())
+        .addColumn('link_id', 'bigint', (c) =>
+          c.notNull().references('linked_accounts.id').onDelete('cascade'),
+        )
+        .addColumn('external_ref', 'text', (c) => c.notNull())
+        .addColumn('external_url', 'text', (c) => c.notNull())
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .addPrimaryKeyConstraint('crossposts_pk', ['post_id', 'link_id'])
+        .execute();
+
+      await db.schema
+        .createTable('jobs')
+        .addColumn('id', 'text', (c) => c.primaryKey())
+        .addColumn('message', 'text', (c) => c.notNull())
+        .addColumn('deliver_at', 'bigint', (c) => c.notNull())
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .execute();
+      await db.schema.createIndex('jobs_due_idx').on('jobs').column('deliver_at').execute();
     },
   },
 };

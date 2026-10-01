@@ -54,10 +54,13 @@ export async function signUp(instance: TestInstance, handle: string): Promise<Jo
   return session;
 }
 
-export async function waitFor<T>(check: () => T | undefined | null | false, timeoutMs = 5000): Promise<T> {
+type Maybe<T> = T | undefined | null | false;
+
+/** Polls `check` (sync or async) until it returns something truthy. */
+export async function waitFor<T>(check: () => Maybe<T> | Promise<Maybe<T>>, timeoutMs = 5000): Promise<T> {
   const started = Date.now();
   for (;;) {
-    const value = check();
+    const value = await check();
     if (value) return value;
     if (Date.now() - started > timeoutMs) throw new Error('Timed out waiting for condition');
     await new Promise((r) => setTimeout(r, 25));

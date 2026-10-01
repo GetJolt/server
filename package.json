@@ -1,6 +1,6 @@
 {
   "name": "@getjolt/server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "The Jolt instance server. Run your own corner of the Jolt network.",
   "license": "AGPL-3.0-only",
@@ -29,20 +29,26 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@atproto/api": "^0.22.0",
+    "@atproto/oauth-client-node": "^0.5.8",
     "@fastify/cors": "^11.3.0",
     "@fastify/helmet": "^13.1.1",
     "@fastify/rate-limit": "^11.2.0",
     "@fastify/websocket": "^11.3.1",
-    "@getjolt/protocol": "^0.1.0",
+    "@fedify/fastify": "^2.3.10",
+    "@fedify/fedify": "^2.3.10",
+    "@getjolt/protocol": "^0.2.0",
+    "@js-temporal/polyfill": "^0.5.1",
     "@node-rs/argon2": "^2.2.1",
     "better-sqlite3": "^13.0.3",
     "fastify": "^5.12.5",
+    "htmlparser2": "^12.0.0",
     "kysely": "^0.29.6",
     "pg": "^8.23.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@getjolt/sdk": "^0.1.0",
+    "@getjolt/sdk": "^0.2.0",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.9.0",
     "@types/pg": "^8.23.1",

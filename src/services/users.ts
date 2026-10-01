@@ -69,5 +69,6 @@ export async function updateProfile(ctx: AppContext, userId: string, body: Updat
   }
   const user = await getUser(ctx, userId);
   await broadcastUserUpdate(ctx, user);
+  await ctx.hooks.onProfileUpdated?.(userId);
   return user;
 }

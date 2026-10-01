@@ -26,12 +26,162 @@ export interface UsersTable {
   remote_id: string | null;
   created_at: Int;
   profile_fetched_at: Int | null;
+  /** ActivityPub actor id, inbox and links for remote accounts reached over ActivityPub. */
+  ap_id: string | null;
+  ap_inbox: string | null;
+  ap_shared_inbox: string | null;
+  ap_url: string | null;
+  ap_followers: string | null;
 }
 
-export interface AvatarsTable {
+/** Uploaded images (avatars and post media), stored once per distinct file and named by its hash. */
+export interface MediaTable {
   hash: string;
   content_type: string;
   data: Uint8Array;
+  width: Int;
+  height: Int;
+  created_at: Int;
+}
+
+/** An image someone uploaded for a post they haven't published yet. Only its owner can attach it. */
+export interface MediaUploadsTable {
+  id: Id;
+  user_id: Id;
+  hash: string;
+  created_at: Int;
+}
+
+export interface PostsTable {
+  id: Id;
+  author_id: Id;
+  text: string;
+  facets: string;
+  visibility: 'public' | 'unlisted' | 'followers';
+  cw: string | null;
+  reply_to_id: Id | null;
+  root_id: Id | null;
+  quote_id: Id | null;
+  reply_count: Int;
+  repost_count: Int;
+  like_count: Int;
+  created_at: Int;
+  edited_at: Int | null;
+  /** The ActivityPub object id and web address of a post that came from another server. */
+  ap_id: string | null;
+  ap_url: string | null;
+}
+
+export interface PostMediaTable {
+  post_id: Id;
+  position: Int;
+  media_hash: string | null;
+  remote_url: string | null;
+  media_type: string;
+  alt: string;
+  width: Int | null;
+  height: Int | null;
+}
+
+export interface FollowsTable {
+  follower_id: Id;
+  followee_id: Id;
+  state: 'pending' | 'following';
+  created_at: Int;
+}
+
+export interface LikesTable {
+  user_id: Id;
+  post_id: Id;
+  created_at: Int;
+}
+
+export interface RepostsTable {
+  id: Id;
+  user_id: Id;
+  post_id: Id;
+  created_at: Int;
+}
+
+/** Signing keys for an ActivityPub actor (a local user, or the instance itself), as JWK JSON. */
+export interface ActorKeysTable {
+  actor: string;
+  rsa_private: string;
+  rsa_public: string;
+  ed_private: string;
+  ed_public: string;
+  created_at: Int;
+}
+
+export interface FedifyKvTable {
+  key: string;
+  value: string;
+  expires_at: Int | null;
+}
+
+export interface FedifyQueueTable {
+  id: string;
+  message: string;
+  deliver_at: Int;
+  created_at: Int;
+}
+
+/** A Bluesky or Mastodon account someone has linked. Tokens are sealed with the instance's secret key. */
+export interface LinkedAccountsTable {
+  id: Id;
+  user_id: Id;
+  provider: 'bluesky' | 'mastodon';
+  external_id: string;
+  handle: string;
+  url: string;
+  secret: string | null;
+  crosspost_default: Flag;
+  show_timeline: Flag;
+  verified_at: Int | null;
+  created_at: Int;
+}
+
+/** A sign-in someone started with Bluesky or Mastodon, waiting for them to come back from that site. */
+export interface OAuthFlowsTable {
+  state: string;
+  user_id: Id;
+  provider: 'bluesky' | 'mastodon';
+  data: string;
+  expires_at: Int;
+}
+
+/** Small sealed values: Bluesky OAuth sessions and state, cached Mastodon app registrations, signing keys. */
+export interface OAuthKvTable {
+  key: string;
+  value: string;
+  expires_at: Int | null;
+}
+
+/** Where a Jolt post was cross-posted to, so replies can thread and deletes can follow it. */
+export interface CrosspostsTable {
+  post_id: Id;
+  link_id: Id;
+  /** The other network's id for the copy: a Bluesky `{ uri, cid }` or a Mastodon status id, as JSON. */
+  external_ref: string;
+  external_url: string;
+  created_at: Int;
+}
+
+/** Background work that isn't ActivityPub delivery: cross-posting and cleaning up after it. */
+export interface JobsTable {
+  id: string;
+  message: string;
+  deliver_at: Int;
+  created_at: Int;
+}
+
+export interface NotificationsTable {
+  id: Id;
+  user_id: Id;
+  type: 'follow' | 'like' | 'repost' | 'reply' | 'mention' | 'quote';
+  actor_id: Id;
+  post_id: Id | null;
+  read: Flag;
   created_at: Int;
 }
 
@@ -171,7 +321,22 @@ export interface GuildIndexTable {
 export interface Database {
   instance_keys: InstanceKeysTable;
   users: UsersTable;
-  avatars: AvatarsTable;
+  media: MediaTable;
+  media_uploads: MediaUploadsTable;
+  posts: PostsTable;
+  post_media: PostMediaTable;
+  follows: FollowsTable;
+  likes: LikesTable;
+  reposts: RepostsTable;
+  notifications: NotificationsTable;
+  actor_keys: ActorKeysTable;
+  fedify_kv: FedifyKvTable;
+  fedify_queue: FedifyQueueTable;
+  linked_accounts: LinkedAccountsTable;
+  oauth_flows: OAuthFlowsTable;
+  oauth_kv: OAuthKvTable;
+  crossposts: CrosspostsTable;
+  jobs: JobsTable;
   credentials: CredentialsTable;
   sessions: SessionsTable;
   identity_certs: IdentityCertsTable;
@@ -194,5 +359,8 @@ export type GuildRow = Selectable<GuildsTable>;
 export type ChannelRow = Selectable<ChannelsTable>;
 export type RoleRow = Selectable<RolesTable>;
 export type MessageRow = Selectable<MessagesTable>;
+export type PostRow = Selectable<PostsTable>;
+export type NotificationRow = Selectable<NotificationsTable>;
+export type LinkedAccountRow = Selectable<LinkedAccountsTable>;
 export type NewMessage = Insertable<MessagesTable>;
 export type OverwriteRow = Selectable<OverwritesTable>;

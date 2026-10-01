@@ -17,6 +17,8 @@ export interface Config {
   devInsecure: boolean;
   workerId: number;
   logLevel: string;
+  /** Seals linked-account tokens. From JOLT_SECRET_KEY, or a key file kept next to the database. */
+  secretKey: string | null;
 }
 
 type Env = Record<string, string | undefined>;
@@ -62,6 +64,7 @@ export function loadConfig(env: Env = process.env, overrides: Partial<Config> = 
     devInsecure: bool(env.JOLT_DEV_INSECURE),
     workerId: Number(env.JOLT_WORKER_ID ?? 0),
     logLevel: env.JOLT_LOG_LEVEL ?? 'info',
+    secretKey: env.JOLT_SECRET_KEY || null,
     ...overrides,
   };
 }

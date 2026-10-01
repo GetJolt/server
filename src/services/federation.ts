@@ -172,24 +172,25 @@ for (const [net, prefix] of [
   privateRanges.addSubnet(net, prefix, 'ipv6');
 }
 
+/** Refuses domains that resolve to private addresses, so user input can't be used to probe our network. */
+export async function assertPublicDomain(ctx: AppContext, domain: string): Promise<void> {
+  if (!isValidInstance(domain)) throw denied('That address is invalid.');
+  if (ctx.config.devInsecure) return;
+  const host = domain.replace(/:\d+$/, '');
+  const addresses = isIP(host) ? [{ address: host, family: isIP(host) }] : await lookup(host, { all: true });
+  for (const { address, family } of addresses) {
+    if (privateRanges.check(address, family === 6 ? 'ipv6' : 'ipv4')) {
+      throw denied('That address resolves to a private network.');
+    }
+  }
+}
+
 /**
  * Fetches JSON from another instance. Domains come from user-supplied certs, so outside of dev mode we
  * refuse anything that resolves to a private address to keep this from being used to probe our network.
  */
-async function fetchRemoteJson(ctx: AppContext, domain: string, path: string): Promise<unknown> {
-  if (!isValidInstance(domain)) throw denied('That instance address is invalid.');
-
-  if (!ctx.config.devInsecure) {
-    const host = domain.replace(/:\d+$/, '');
-    const addresses = isIP(host)
-      ? [{ address: host, family: isIP(host) }]
-      : await lookup(host, { all: true });
-    for (const { address, family } of addresses) {
-      if (privateRanges.check(address, family === 6 ? 'ipv6' : 'ipv4')) {
-        throw denied('That instance resolves to a private address.');
-      }
-    }
-  }
+export async function fetchRemoteJson(ctx: AppContext, domain: string, path: string): Promise<unknown> {
+  await assertPublicDomain(ctx, domain);
 
   const response = await fetch(`${instanceOrigin(domain, ctx.config.devInsecure)}${path}`, {
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
