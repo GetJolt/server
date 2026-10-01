@@ -15,7 +15,7 @@ import {
   type PresenceStatus,
   type UpdateGuildBody,
   type UpdateMemberBody,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import type { AppContext } from '../context.js';
 import type { GuildRow } from '../db/schema.js';
 import { id, num } from '../db/values.js';

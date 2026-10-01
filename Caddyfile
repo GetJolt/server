@@ -1,0 +1,4 @@
+{$JOLT_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy jolt:4000
+}

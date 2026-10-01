@@ -2,7 +2,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import websocket from '@fastify/websocket';
-import { API_PREFIX, createSnowflakeGenerator, GATEWAY_PATH } from '@jolt/protocol';
+import { API_PREFIX, createSnowflakeGenerator, GATEWAY_PATH } from '@getjolt/protocol';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { Config } from './config.js';
 import type { AppContext } from './context.js';

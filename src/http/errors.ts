@@ -1,4 +1,4 @@
-import { ErrorCode } from '@jolt/protocol';
+import { ErrorCode } from '@getjolt/protocol';
 import type { FastifyError, FastifyInstance } from 'fastify';
 import { ZodError, type ZodType } from 'zod';
 

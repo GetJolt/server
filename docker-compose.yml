@@ -1,0 +1,44 @@
+# A Jolt instance behind Caddy, which takes care of HTTPS.
+# Copy .env.example to .env, set JOLT_DOMAIN, point that domain at this machine, then `docker compose up -d`.
+services:
+  jolt:
+    image: ghcr.io/getjolt/server:latest
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      JOLT_TRUST_PROXY: 'true'
+    volumes:
+      - jolt-data:/data
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      JOLT_DOMAIN: ${JOLT_DOMAIN:?Set JOLT_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - jolt
+
+  # Optional: `docker compose --profile postgres up -d`, then set JOLT_DATABASE in .env to
+  # postgres://jolt:change-me@postgres:5432/jolt
+  postgres:
+    image: postgres:17
+    profiles: [postgres]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jolt
+      POSTGRES_PASSWORD: change-me
+      POSTGRES_DB: jolt
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  jolt-data:
+  caddy-data:
+  postgres-data:

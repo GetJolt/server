@@ -8,7 +8,7 @@ import {
   type PermissionContext,
   type PermissionOverwrite,
   type PermissionRole,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import type { Kysely } from 'kysely';
 import type { Database } from '../db/schema.js';
 import { id, num } from '../db/values.js';

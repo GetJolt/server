@@ -1,4 +1,4 @@
-import { ErrorCode, federationAuthBodySchema, WELL_KNOWN_PATH } from '@jolt/protocol';
+import { ErrorCode, federationAuthBodySchema, WELL_KNOWN_PATH } from '@getjolt/protocol';
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../context.js';
 import { ApiError, parse } from '../http/errors.js';

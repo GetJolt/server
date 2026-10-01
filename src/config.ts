@@ -1,4 +1,4 @@
-import { isValidInstance, normalizeInstance } from '@jolt/protocol';
+import { isValidInstance, normalizeInstance } from '@getjolt/protocol';
 
 export interface Config {
   domain: string;

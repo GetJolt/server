@@ -5,7 +5,7 @@ import {
   type CreateInviteBody,
   type GuildSnapshot,
   type Invite,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import { randomInt } from 'node:crypto';
 import { sql } from 'kysely';
 import type { AppContext } from '../context.js';

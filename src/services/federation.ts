@@ -24,7 +24,7 @@ import {
   type IdentityCert,
   type InstanceInfo,
   type User,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import { z } from 'zod';
 import type { AppContext } from '../context.js';
 import type { UserRow } from '../db/schema.js';
@@ -303,7 +303,9 @@ export async function refreshRemoteProfile(ctx: AppContext, row: UserRow, force 
   const profile = await fetchRemoteProfile(ctx, row.instance, row.handle);
   if (!profile) return row;
 
-  const avatarUrl = profile.avatarUrl?.startsWith('https://') ? profile.avatarUrl : null;
+  // Only images hosted by the user's own instance, so a profile can't make everyone load a tracking pixel.
+  const home = `${instanceOrigin(row.instance, ctx.config.devInsecure)}/`;
+  const avatarUrl = profile.avatarUrl?.startsWith(home) ? profile.avatarUrl : null;
   const changed =
     profile.displayName !== row.display_name || profile.bio !== row.bio || avatarUrl !== row.avatar_url;
   await ctx.db

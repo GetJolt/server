@@ -1,5 +1,5 @@
-import { Permission } from '@jolt/protocol';
-import { JoltApiError, scoped, sortedTextChannels, type JoltSession } from '@jolt/sdk';
+import { Permission } from '@getjolt/protocol';
+import { JoltApiError, scoped, sortedTextChannels, type JoltSession } from '@getjolt/sdk';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { signUp, startInstance, waitFor, type TestInstance } from './helpers.js';
 

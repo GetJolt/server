@@ -1,6 +1,6 @@
 // Migrations are written with Kysely's schema builder using only types both SQLite and Postgres accept.
 
-import type { Kysely } from 'kysely';
+import { PostgresAdapter, type Kysely } from 'kysely';
 import type { Migration, MigrationProvider } from 'kysely/migration';
 
 const migrations: Record<string, Migration> = {
@@ -196,6 +196,19 @@ const migrations: Record<string, Migration> = {
         .addColumn('guild_id', 'text', (c) => c.notNull())
         .addColumn('position', 'integer', (c) => c.notNull())
         .addPrimaryKeyConstraint('guild_index_pk', ['user_id', 'instance', 'guild_id'])
+        .execute();
+    },
+  },
+
+  '0002_avatars': {
+    async up(db: Kysely<unknown>) {
+      const binary = db.getExecutor().adapter instanceof PostgresAdapter ? 'bytea' : 'blob';
+      await db.schema
+        .createTable('avatars')
+        .addColumn('hash', 'text', (c) => c.primaryKey())
+        .addColumn('content_type', 'text', (c) => c.notNull())
+        .addColumn('data', binary, (c) => c.notNull())
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
         .execute();
     },
   },

@@ -9,7 +9,7 @@ import {
   type ReorderBody,
   type Role,
   type UpdateRoleBody,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import type { AppContext } from '../context.js';
 import type { RoleRow } from '../db/schema.js';
 import { flag, id, num, optNum, toFlag } from '../db/values.js';

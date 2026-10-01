@@ -1,4 +1,4 @@
-import type { UpdateProfileBody, User } from '@jolt/protocol';
+import type { UpdateProfileBody, User } from '@getjolt/protocol';
 import type { AppContext } from '../context.js';
 import type { UserRow } from '../db/schema.js';
 import { flag, id } from '../db/values.js';
@@ -60,10 +60,9 @@ export async function broadcastUserUpdate(ctx: AppContext, user: User): Promise<
 }
 
 export async function updateProfile(ctx: AppContext, userId: string, body: UpdateProfileBody): Promise<User> {
-  const changes: { display_name?: string; bio?: string; avatar_url?: string | null } = {};
+  const changes: { display_name?: string; bio?: string } = {};
   if (body.displayName !== undefined) changes.display_name = body.displayName;
   if (body.bio !== undefined) changes.bio = body.bio;
-  if (body.avatarUrl !== undefined) changes.avatar_url = body.avatarUrl;
 
   if (Object.keys(changes).length > 0) {
     await ctx.db.updateTable('users').set(changes).where('id', '=', userId).execute();

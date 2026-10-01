@@ -28,6 +28,13 @@ export interface UsersTable {
   profile_fetched_at: Int | null;
 }
 
+export interface AvatarsTable {
+  hash: string;
+  content_type: string;
+  data: Uint8Array;
+  created_at: Int;
+}
+
 export interface CredentialsTable {
   user_id: Id;
   password_hash: string;
@@ -164,6 +171,7 @@ export interface GuildIndexTable {
 export interface Database {
   instance_keys: InstanceKeysTable;
   users: UsersTable;
+  avatars: AvatarsTable;
   credentials: CredentialsTable;
   sessions: SessionsTable;
   identity_certs: IdentityCertsTable;

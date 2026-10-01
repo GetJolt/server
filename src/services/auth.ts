@@ -7,7 +7,7 @@ import {
   type LoginBody,
   type RegisterBody,
   type SessionInfo,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import type { FastifyRequest } from 'fastify';
 import type { AppContext } from '../context.js';
 import type { UserRow } from '../db/schema.js';

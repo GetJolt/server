@@ -5,7 +5,7 @@ import {
   Permission,
   updateChannelBodySchema,
   updateMessageBodySchema,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../context.js';
 import { id } from '../db/values.js';

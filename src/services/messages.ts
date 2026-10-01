@@ -8,7 +8,7 @@ import {
   type Message,
   type ReadState,
   type UpdateMessageBody,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import type { AppContext } from '../context.js';
 import { id, num, optId } from '../db/values.js';
 import { guildTopic, userTopic } from '../events/EventBus.js';

@@ -1,16 +1,18 @@
 import {
+  AVATAR_CONTENT_TYPES,
   guildIndexBodySchema,
   handleSchema,
   issueCertBodySchema,
+  Limits,
   loginBodySchema,
   registerBodySchema,
   updateProfileBodySchema,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../context.js';
 import { flag } from '../db/values.js';
 import type { Gateway } from '../gateway/Gateway.js';
-import { notFound, parse } from '../http/errors.js';
+import { badRequest, notFound, parse } from '../http/errors.js';
 import {
   listSessions,
   login,
@@ -19,6 +21,7 @@ import {
   requireLocalAuth,
   revokeSession,
 } from '../services/auth.js';
+import { getAvatar, removeAvatar, setAvatar } from '../services/avatars.js';
 import { getGuildIndex, issueCert, refreshRemoteProfile, setGuildIndex } from '../services/federation.js';
 import { getLocalUserByHandle, getUser, serializeUser, updateProfile } from '../services/users.js';
 
@@ -44,6 +47,36 @@ export function userRoutes(app: FastifyInstance, ctx: AppContext, gateway: Gatew
   app.patch('/users/@me', async (req) => {
     const { userId } = await requireLocalAuth(ctx, req);
     return updateProfile(ctx, userId, parse(updateProfileBodySchema, req.body));
+  });
+
+  // Avatars are uploaded as the raw image body rather than JSON or multipart.
+  app.addContentTypeParser(
+    [...AVATAR_CONTENT_TYPES],
+    { parseAs: 'buffer', bodyLimit: Limits.avatarBytes },
+    (_req, body, done) => done(null, body),
+  );
+
+  app.put('/users/@me/avatar', { config: strict }, async (req) => {
+    const { userId } = await requireLocalAuth(ctx, req);
+    if (!Buffer.isBuffer(req.body)) throw badRequest('Send the image as the request body.');
+    return setAvatar(ctx, userId, req.body);
+  });
+
+  app.delete('/users/@me/avatar', async (req) => {
+    const { userId } = await requireLocalAuth(ctx, req);
+    return removeAvatar(ctx, userId);
+  });
+
+  app.get<{ Params: { hash: string } }>('/avatars/:hash', async (req, reply) => {
+    const avatar = /^[\w-]{43}$/.test(req.params.hash) ? await getAvatar(ctx, req.params.hash) : undefined;
+    if (!avatar) throw notFound('That image');
+    // Loaded by clients on other origins, and never rendered as anything but an image.
+    return reply
+      .header('content-type', avatar.content_type)
+      .header('cache-control', 'public, max-age=31536000, immutable')
+      .header('cross-origin-resource-policy', 'cross-origin')
+      .header('content-security-policy', "default-src 'none'; sandbox")
+      .send(Buffer.from(avatar.data));
   });
 
   /** Remote users call this on foreign instances after editing their profile at home. */

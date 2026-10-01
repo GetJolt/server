@@ -11,7 +11,7 @@ import {
   type GatewayEvents,
   type GuildSnapshot,
   type ServerFrame,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import type { WebSocket } from 'ws';
 import type { AppContext } from '../context.js';
 import { guildTopic, userTopic, type BusEvent } from '../events/EventBus.js';

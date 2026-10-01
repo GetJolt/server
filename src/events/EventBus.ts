@@ -1,7 +1,7 @@
 // Fan-out for gateway events. Topics are `guild:<id>` and `user:<id>`. The in-process bus is enough for a
 // single server; a Redis-backed implementation can slot in behind the same interface later.
 
-import type { GatewayEventName, GatewayEvents } from '@jolt/protocol';
+import type { GatewayEventName, GatewayEvents } from '@getjolt/protocol';
 
 export type DispatchEvent = {
   [K in GatewayEventName]: {

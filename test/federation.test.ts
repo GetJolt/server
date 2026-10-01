@@ -4,8 +4,8 @@ import {
   issueIdentityCert,
   newCertSerial,
   signBytes,
-} from '@jolt/protocol';
-import { scoped, sortedTextChannels, type JoltApiError, type JoltSession } from '@jolt/sdk';
+} from '@getjolt/protocol';
+import { scoped, sortedTextChannels, type JoltApiError, type JoltSession } from '@getjolt/sdk';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { signUp, startInstance, waitFor, type TestInstance } from './helpers.js';
 
@@ -80,6 +80,14 @@ describe('federation', () => {
     const guild = Object.values(alice.state.guilds).find((g) => g.guild.name === 'Cross-instance')!;
     const bobId = Object.values(guild.members).find((m) => m.user.handle === 'bob')!.user.id;
     await waitFor(() => alice.state.guilds[guild.key]?.members[bobId]?.user.displayName === 'Bobby');
+
+    const pixel = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+      'base64',
+    );
+    await bob.setAvatar(new Blob([pixel], { type: 'image/png' }));
+    const avatar = await waitFor(() => alice.state.guilds[guild.key]?.members[bobId]?.user.avatarUrl);
+    expect(avatar.startsWith(`http://${b.domain}/`)).toBe(true);
   });
 
   it('rejects certificates not signed by the claimed home instance', async () => {

@@ -1,4 +1,4 @@
-import type { PresenceStatus } from '@jolt/protocol';
+import type { PresenceStatus } from '@getjolt/protocol';
 
 type Listener = (userId: string, status: PresenceStatus) => void;
 

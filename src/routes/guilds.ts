@@ -7,7 +7,7 @@ import {
   updateGuildBodySchema,
   updateMemberBodySchema,
   updateRoleBodySchema,
-} from '@jolt/protocol';
+} from '@getjolt/protocol';
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../context.js';
 import { flag } from '../db/values.js';

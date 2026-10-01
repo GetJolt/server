@@ -1,5 +1,5 @@
 import { createServer } from 'node:net';
-import { JoltSession, type SecureStorage } from '@jolt/sdk';
+import { JoltSession, type SecureStorage } from '@getjolt/sdk';
 import { buildServer, type JoltServer } from '../src/app.js';
 import { loadConfig, type Config } from '../src/config.js';
 

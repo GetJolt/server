@@ -1,12 +1,25 @@
 {
-  "name": "@jolt/server",
+  "name": "@getjolt/server",
   "version": "0.1.0",
-  "description": "Jolt instance server.",
+  "private": true,
+  "description": "The Jolt instance server. Run your own corner of the Jolt network.",
   "license": "AGPL-3.0-only",
+  "author": "The Jolt contributors",
+  "homepage": "https://github.com/GetJolt/server#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GetJolt/server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GetJolt/server/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
     "jolt-server": "./dist/main.js"
+  },
+  "engines": {
+    "node": ">=22.12"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -20,7 +33,7 @@
     "@fastify/helmet": "^13.1.1",
     "@fastify/rate-limit": "^11.2.0",
     "@fastify/websocket": "^11.3.1",
-    "@jolt/protocol": "workspace:*",
+    "@getjolt/protocol": "^0.1.0",
     "@node-rs/argon2": "^2.2.1",
     "better-sqlite3": "^13.0.3",
     "fastify": "^5.12.5",
@@ -29,12 +42,15 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@jolt/sdk": "workspace:*",
+    "@getjolt/sdk": "^0.1.0",
     "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^24.9.0",
     "@types/pg": "^8.23.1",
     "@types/ws": "^8.18.2",
     "pino-pretty": "^13.1.3",
     "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3",
     "ws": "^8.22.0"
   }
 }
