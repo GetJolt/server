@@ -7,6 +7,7 @@ import {
   atprotoLoopbackClientMetadata,
   buildAtprotoLoopbackClientId,
   HandleResolverError,
+  isExpectedSessionError,
   JoseKey,
   NodeOAuthClient,
   OAuthResolverError,
@@ -105,6 +106,7 @@ export function blueskyClient(ctx: AppContext): Promise<NodeOAuthClient> {
         keyset: isLocal(ctx) ? undefined : [await signingKey(ctx)],
         stateStore: store<NodeSavedState>(ctx, 'bluesky-state', STATE_TTL_MS),
         sessionStore: store<NodeSavedSession>(ctx, 'bluesky-session', null),
+        onSessionDeleted: (did, cause) => ctx.log.warn({ did, err: cause }, 'Bluesky session ended'),
       }))();
     client.catch(() => clients.delete(ctx));
     clients.set(ctx, client);
@@ -165,7 +167,16 @@ export async function finishBlueskyLink(ctx: AppContext, params: URLSearchParams
 /** An authenticated client for a linked account, refreshing its tokens as needed. */
 export async function blueskyAgent(ctx: AppContext, row: LinkedAccountRow): Promise<Agent> {
   const client = await blueskyClient(ctx);
-  return new Agent(await client.restore(row.external_id));
+  const session = await client.restore(row.external_id).catch((error: unknown) => {
+    // Bluesky revoked or expired the session, or a refresh failed. Only signing in again fixes that.
+    if (isExpectedSessionError(error)) {
+      throw badRequest(
+        `Jolt's sign-in to ${row.handle} on Bluesky has expired. Link the account again in Settings.`,
+      );
+    }
+    throw error;
+  });
+  return new Agent(session);
 }
 
 export async function revokeBluesky(ctx: AppContext, row: LinkedAccountRow): Promise<void> {
