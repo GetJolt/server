@@ -23,8 +23,11 @@ SQLite is fine for most communities. If you outgrow it, start with `docker compo
 ```sh
 npm install
 npm run build
-JOLT_DOMAIN=chat.example.org npm start
+cp .env.example .env    # then set JOLT_DOMAIN and anything else you need
+npm start
 ```
+
+`npm start` reads `.env` from this folder if there is one. Variables already set in the environment, from systemd for example, take priority over it.
 
 Put it behind a reverse proxy that handles TLS and passes WebSocket upgrades through, and set `JOLT_TRUST_PROXY=true` so rate limits see your visitors' real addresses.
 
