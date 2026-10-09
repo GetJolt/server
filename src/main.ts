@@ -19,7 +19,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 
 await app.listen({ host: config.host, port: config.port });
 app.log.info(
-  `Jolt instance "${config.name}" serving ${config.domain} (registration: ${config.registration}, federation: ${config.federation})`,
+  `Jolt instance "${config.name}" serving ${config.domain} (registration: ${config.registration}, federation: ${config.federation}, welcome message: ${config.welcomeMessage ? 'on' : 'off'})`,
 );
 if (config.devInsecure)
   app.log.warn('JOLT_DEV_INSECURE is on: federation uses plain http. Never run like this in production.');
