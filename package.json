@@ -37,7 +37,7 @@
     "@fastify/websocket": "^11.3.1",
     "@fedify/fastify": "^2.3.10",
     "@fedify/fedify": "^2.3.10",
-    "@getjolt/protocol": "^0.2.1`",
+    "@getjolt/protocol": "^0.2.1",
     "@js-temporal/polyfill": "^0.5.1",
     "@node-rs/argon2": "^2.2.1",
     "better-sqlite3": "^13.0.3",
