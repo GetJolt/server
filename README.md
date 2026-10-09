@@ -32,6 +32,8 @@ Put it behind a reverse proxy that handles TLS and passes WebSocket upgrades thr
 
 Everything is configured with environment variables, and [.env.example](.env.example) explains each one. The ones that matter most are `JOLT_DOMAIN`, which is the address people and other instances use to reach you, `JOLT_REGISTRATION`, which decides who can sign up, and `JOLT_FEDERATION`, which decides which other instances your users can talk to. You can leave federation open and block the odd bad actor with `JOLT_FEDERATION_BLOCK`, or allow only a few named instances with `allowlist`.
 
+To greet new accounts, set `JOLT_WELCOME_INVITE` to an invite link for your main server. Everyone who signs up then gets a welcome with that link, as a read-only message from "Jolt" that shows up in their direct messages. `JOLT_WELCOME_MESSAGE` swaps in your own text. It's off unless you set one of them.
+
 ## How it fits together
 
 The server is built on Fastify, with a WebSocket gateway for realtime events and Kysely for the database, so the same code runs against SQLite or Postgres. Messages sit behind a small `MessageStore` interface, which leaves room to move them to something like ScyllaDB on a very large instance without touching anything else.

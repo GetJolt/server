@@ -19,9 +19,28 @@ export interface Config {
   logLevel: string;
   /** Seals linked-account tokens. From JOLT_SECRET_KEY, or a key file kept next to the database. */
   secretKey: string | null;
+  /**
+   * What new accounts are sent from "Jolt" when they sign up, or null to send nothing (the default). Set by
+   * JOLT_WELCOME_MESSAGE, or by JOLT_WELCOME_INVITE alone for the standard welcome with that invite.
+   */
+  welcomeMessage: string | null;
 }
 
 type Env = Record<string, string | undefined>;
+
+const DEFAULT_WELCOME = [
+  'Hey {name}, welcome to Jolt! 👋',
+  "You're all set. The official Jolt server is where the project is built in the open: updates, help, feedback and people to talk to. Come and say hi:",
+  '{invite}',
+].join('\n\n');
+
+/** The welcome template, with `\n` in the env var read as a line break and the invite filled in. */
+function welcomeMessage(env: Env): string | null {
+  const invite = env.JOLT_WELCOME_INVITE?.trim() ?? '';
+  const template = env.JOLT_WELCOME_MESSAGE?.trim() || (invite ? DEFAULT_WELCOME : '');
+  if (!template) return null;
+  return template.replaceAll('\\n', '\n').replaceAll('{invite}', invite);
+}
 
 const list = (value: string | undefined) =>
   (value ?? '')
@@ -65,6 +84,7 @@ export function loadConfig(env: Env = process.env, overrides: Partial<Config> = 
     workerId: Number(env.JOLT_WORKER_ID ?? 0),
     logLevel: env.JOLT_LOG_LEVEL ?? 'info',
     secretKey: env.JOLT_SECRET_KEY || null,
+    welcomeMessage: welcomeMessage(env),
     ...overrides,
   };
 }

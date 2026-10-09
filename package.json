@@ -1,6 +1,6 @@
 {
   "name": "@getjolt/server",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "description": "The Jolt instance server. Run your own corner of the Jolt network.",
   "license": "AGPL-3.0-only",

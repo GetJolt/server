@@ -157,6 +157,15 @@ export interface OAuthKvTable {
   expires_at: Int | null;
 }
 
+/** Messages from the instance itself to one of its users, shown as a read-only conversation with "Jolt". */
+export interface SystemMessagesTable {
+  id: Id;
+  user_id: Id;
+  text: string;
+  read: Flag;
+  created_at: Int;
+}
+
 /** Where a Jolt post was cross-posted to, so replies can thread and deletes can follow it. */
 export interface CrosspostsTable {
   post_id: Id;
@@ -336,6 +345,7 @@ export interface Database {
   oauth_flows: OAuthFlowsTable;
   oauth_kv: OAuthKvTable;
   crossposts: CrosspostsTable;
+  system_messages: SystemMessagesTable;
   jobs: JobsTable;
   credentials: CredentialsTable;
   sessions: SessionsTable;
@@ -362,5 +372,6 @@ export type MessageRow = Selectable<MessagesTable>;
 export type PostRow = Selectable<PostsTable>;
 export type NotificationRow = Selectable<NotificationsTable>;
 export type LinkedAccountRow = Selectable<LinkedAccountsTable>;
+export type SystemMessageRow = Selectable<SystemMessagesTable>;
 export type NewMessage = Insertable<MessagesTable>;
 export type OverwriteRow = Selectable<OverwritesTable>;

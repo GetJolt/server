@@ -22,6 +22,7 @@ import {
 } from '../services/auth.js';
 import { removeAvatar, setAvatar } from '../services/avatars.js';
 import { getGuildIndex, issueCert, refreshRemoteProfile, setGuildIndex } from '../services/federation.js';
+import { listSystemMessages, markSystemMessagesRead } from '../services/system.js';
 import { getLocalUserByHandle, getUser, serializeUser, updateProfile } from '../services/users.js';
 
 const strict = { rateLimit: { max: 10, timeWindow: '1 minute' } };
@@ -42,6 +43,16 @@ export function userRoutes(app: FastifyInstance, ctx: AppContext, gateway: Gatew
   });
 
   app.get('/users/@me', async (req) => serializeUser((await requireAuth(ctx, req)).user));
+
+  app.get('/system-messages', async (req) => {
+    const { userId } = await requireLocalAuth(ctx, req);
+    return listSystemMessages(ctx, userId);
+  });
+  app.post('/system-messages/read', async (req, reply) => {
+    const { userId } = await requireLocalAuth(ctx, req);
+    await markSystemMessagesRead(ctx, userId);
+    reply.status(204);
+  });
 
   app.patch('/users/@me', async (req) => {
     const { userId } = await requireLocalAuth(ctx, req);

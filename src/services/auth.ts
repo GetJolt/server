@@ -13,6 +13,7 @@ import type { AppContext } from '../context.js';
 import type { UserRow } from '../db/schema.js';
 import { id, num, optNum } from '../db/values.js';
 import { ApiError, notFound, unauthorized } from '../http/errors.js';
+import { sendWelcome } from './system.js';
 import { getLocalUserByHandle, serializeUser } from './users.js';
 
 export interface AuthedSession {
@@ -95,6 +96,7 @@ export async function register(ctx: AppContext, body: RegisterBody): Promise<Aut
     await trx.insertInto('credentials').values({ user_id: userId, password_hash: passwordHash }).execute();
   });
 
+  await sendWelcome(ctx, userId, body.displayName ?? body.handle);
   const token = await createSession(ctx, userId, { kind: 'local', deviceName: body.deviceName });
   const user = await ctx.db
     .selectFrom('users')

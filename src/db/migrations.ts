@@ -421,6 +421,24 @@ const migrations: Record<string, Migration> = {
       await db.schema.createIndex('jobs_due_idx').on('jobs').column('deliver_at').execute();
     },
   },
+
+  '0007_system_messages': {
+    async up(db: Kysely<unknown>) {
+      await db.schema
+        .createTable('system_messages')
+        .addColumn('id', 'bigint', (c) => c.primaryKey())
+        .addColumn('user_id', 'bigint', (c) => c.notNull().references('users.id').onDelete('cascade'))
+        .addColumn('text', 'text', (c) => c.notNull())
+        .addColumn('read', 'integer', (c) => c.notNull().defaultTo(0))
+        .addColumn('created_at', 'bigint', (c) => c.notNull())
+        .execute();
+      await db.schema
+        .createIndex('system_messages_user_idx')
+        .on('system_messages')
+        .columns(['user_id', 'id'])
+        .execute();
+    },
+  },
 };
 
 export const migrationProvider: MigrationProvider = {
