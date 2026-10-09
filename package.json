@@ -37,7 +37,7 @@
     "@fastify/websocket": "^11.3.1",
     "@fedify/fastify": "^2.3.10",
     "@fedify/fedify": "^2.3.10",
-    "@getjolt/protocol": "^0.2.0",
+    "@getjolt/protocol": "^0.2.1`",
     "@js-temporal/polyfill": "^0.5.1",
     "@node-rs/argon2": "^2.2.1",
     "better-sqlite3": "^13.0.3",
@@ -48,7 +48,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@getjolt/sdk": "^0.2.1",
+    "@getjolt/sdk": "^0.2.2",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.9.0",
     "@types/pg": "^8.23.1",
